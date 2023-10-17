@@ -16,7 +16,7 @@ class ImageModel(models.Model):
     # truck = models.IntegerField(default=0)
     # trailer = models.IntegerField(default=0)
     # motorcycle = models.IntegerField(default=0)
-    car_class = models.JSONField()
+    car_class = models.JSONField(blank=True, null=True)
     date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
