@@ -1,78 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>차종 분석 프로젝트</title>
+    <!-- Add your CSS and JavaScript links here -->
+    {% block header %}
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> <!-- Font Awesome CSS -->
+        <style>
+            body {
+                margin-top: 40px;
+                margin-bottom: 40px;
+            }
 
-{% block header %}
+            table {
+                border-collapse: collapse;
+                width: 100%;
+            }
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>   
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+            th, td {
+                border: 1px solid black;
+                padding: 8px;
+                text-align: center;
+            }
 
+            div.card-body {
+                border: none;
+            }
 
-<style>
-    table {
-        border-collapse: collapse;
-        width: 100%;
-    }
-
-    table, th, td {
-        border: 1px solid black;
-    }
-
-    th, td {
-        padding: 8px;
-        text-align: left;
-    }
-</style>
-
-{% endblock %}
-
-{% block contents %}
-<div class="container mt-5">
-    <div class="row">
-        <div class="col-sm-6">
-            <div class="card animate__animated animate__fadeInLeft">
-                <div class="card-body">
-                    <h5 class="card-title">이미지 업로드</h5>
-                    <div id="uploadedImage"></div>
-                </div>
-            </div>
-            <div class="mt-4">
-                <form action="" enctype="multipart/form-data" id="imageUploadForm" method="post">
-                    {% csrf_token %}
-                    <div class="form-group">
-                        <label for="{{ form.image.id_for_label }}">이미지 선택:</label>
-                        <input type="file" class="form-control-file" name="image" id="{{ form.image.id_for_label }}">
+            h1 {
+                font-weight: bold;
+                text-align: center;
+                margin-bottom: 20px;
+            }
+        </style>
+        <script>
+            // 페이지가 로드되면 실행
+            window.addEventListener('load', function() {
+                const toggleButton = document.getElementById('toggleButton');
+                const resultTable = document.getElementById('resultTable');
+                
+                // 결과 테이블을 보이게 설정
+                resultTable.style.display = 'block';
+                
+                // 토글 버튼 클릭 시 결과 테이블 표시/숨김
+                toggleButton.addEventListener('click', function() {
+                    if (resultTable.style.display === 'none' || resultTable.style.display === '') {
+                        resultTable.style.display = 'block';
+                    } else {
+                        resultTable.style.display = 'none';
+                    }
+                });
+            });
+        </script>
+    {% endblock %}
+    </head>
+    <body>
+    <h1>차종 분석 프로젝트</h1>
+    <div class="container align-items-center">
+        {% block contents %}
+            <div class="row">
+                <div class="col-sm-3">
+                    <!-- 이미지 업로드 -->
+                    <div class="card animate__animated animate__fadeInLeft">
+                        <div class="card-body">
+                            <h5 class="card-title">이미지 업로드</h5>
+                            <div id="uploadedImage"></div>
+                            <div class="mt-4">
+                                <form action="" enctype="multipart/form-data" id="imageUploadForm" method="post">
+                                    {% csrf_token %}
+                                    <div class="form-group">
+                                        <label for="{{ form.image.id_for_label }}">이미지 선택</label>
+                                        <input type="file" class="form-control-file" name="image" id="{{ form.image.id_for_label }}">
+                                    </div>
+                                    <button class="btn btn-outline-success" type="submit">제출</button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
-                    <button class="btn btn-outline-success" type="submit">제출</button>
-                </form>
+                </div>
+
+                <div class="col-sm-9">
+                    <!-- 이미지 결과 -->
+                    <div class="card animate__animated animate__fadeInLeft" style="height: 100%;">
+                        <div class="card-body d-flex flex-column justify-content-center text-center" style="height: 100%;">
+                            <h5 class="card-title">이미지 결과</h5>
+                            {% if inference_img %}
+                                <div style="display: inline-block;">
+                                    <img src="{{inference_img}}" style="max-width: 450px; max-height: 450px; vertical-align: middle;" />
+                                </div>
+                            {% else %}
+                                <p>이미지가 없습니다.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>                
+                
             </div>
-        </div>
-        <div class="col-sm-6">
-            <div class="card animate__animated animate__fadeInRight">
-                <div class="card-body">
-                    <h5 class="card-title">결과</h5>
-                    {% if inference_img %}
-                        <img src="{{inference_img}}" class="img-fluid" />
-                        <table class="table table-bordered mt-3">
-                            <thead>
-                                <tr>
-                                    <th>클래스</th>
-                                    <th>개수</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for class, count in class_counts.items %}
+
+            <div class="row mt-4">
+                <div class="col">
+                    <!-- 토글 버튼 -->
+                    <button id="toggleButton" class="btn btn-primary">
+                        결과 테이블 표시/숨기기 
+                        <i class="fas fa-caret-down"></i> <!-- Font Awesome 화살표 아이콘 -->
+                    </button>
+                    
+                    <!-- 결과 테이블 -->
+                    <div id="resultTable" class="card animate__animated animate__fadeInRight">
+                        <div class="card-body" style="overflow: auto; max-height: 300px;">
+                            {% comment %} <h5 class="card-title">결과</h5> {% endcomment %}
+                            <table class="table table-bordered mt-3">
+                                <thead class="table-secondary">
                                     <tr>
-                                        <td>{{ class }}</td>
-                                        <td>{{ count }}</td>
+                                        <th>클래스</th>
+                                        <th>개수</th>
                                     </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    {% else %}
-                        <p>이미지가 없습니다.</p>
-                    {% endif %}
+                                </thead>
+                                <tbody>
+                                    {% for class, count in class_counts.items %}
+                                        <tr>
+                                            <td>{{ class }}</td>
+                                            <td>{{ count }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            <button class="btn btn-outline-success float-right" type="submit">제출</button>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        {% endblock %}
     </div>
-</div>
-{% endblock %}
+</body>
+</html>
