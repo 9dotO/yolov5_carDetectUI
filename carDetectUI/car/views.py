@@ -66,7 +66,9 @@ class UploadImage(CreateView, ListView):
 
             # yolov5모델로드
            
-            model = torch.hub.load("yolov5", "best", source='local')
+            model = torch.hub.load("yolov5", "best", source='local', force_reload=True)
+            # model = torch.hub.load('ultralytics/yolov5', 'yolov5s', force_reload=True)
+
 
             # 객체 감지
             results = model(img, size=640)
